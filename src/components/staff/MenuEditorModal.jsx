@@ -1,5 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 
+import ProductImageUploader from "./ProductImageUploader";
+
+const EMPTY_PRODUCT = {
+  Name: "",
+  Description: "",
+  Price: "",
+  Category: "",
+  Image: "",
+  Available: true,
+  BestSeller: false,
+  TodaysSpecial: false,
+  Archived: false,
+};
+
 export default function MenuEditorModal({
   open,
   item,
@@ -7,279 +21,267 @@ export default function MenuEditorModal({
   onClose,
   onSave,
 }) {
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState(EMPTY_PRODUCT);
   const [newCategory, setNewCategory] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [removeImage, setRemoveImage] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (item) {
-      setForm({
-        Available: true,
-        BestSeller: false,
-        TodaysSpecial: false,
-        Archived: false,
-        Image: "",
-        ...item,
-      });
+    if (!open) return;
 
-      setNewCategory("");
-    }
-  }, [item]);
+    setForm({ ...EMPTY_PRODUCT, ...(item || {}) });
+    setNewCategory("");
+    setImageFile(null);
+    setRemoveImage(false);
+    setUploadProgress(0);
+    setError("");
+  }, [item, open]);
 
-  const categories = useMemo(() => {
-  return [
-    ...new Set(
-      (menuItems || [])
-        .map((i) => i.Category)
-        .filter(Boolean)
-    ),
-  ];
-}, [menuItems]);
+  const categories = useMemo(
+    () =>
+      [...new Set((menuItems || []).map((menuItem) => menuItem.Category).filter(Boolean))]
+        .sort((first, second) => first.localeCompare(second)),
+    [menuItems],
+  );
 
   if (!open) return null;
 
+  function updateField(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
   function handleCategoryChange(value) {
     if (value === "__new__") {
-      setForm({
-        ...form,
-        Category: "",
-      });
+      setNewCategory("");
+      updateField("Category", "");
       return;
     }
 
-    setForm({
-      ...form,
-      Category: value,
-    });
+    setNewCategory("");
+    updateField("Category", value);
   }
 
-  function handleSave() {
-    const payload = {
-      ...form,
-      Category:
-        newCategory.trim() !== ""
-          ? newCategory.trim()
-          : form.Category,
-    };
+  async function handleSubmit(event) {
+    event.preventDefault();
 
-    onSave(payload);
+    const category = newCategory.trim() || String(form.Category || "").trim();
+    const price = Number(form.Price);
+
+    if (!String(form.Name || "").trim()) {
+      setError("Product name is required.");
+      return;
+    }
+    if (!category) {
+      setError("Choose or create a category.");
+      return;
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      setError("Enter a valid price of zero or more.");
+      return;
+    }
+
+    setIsSaving(true);
+    setUploadProgress(0);
+    setError("");
+
+    try {
+      await onSave(
+        {
+          ...form,
+          Name: form.Name.trim(),
+          Description: String(form.Description || "").trim(),
+          Category: category,
+          Price: price,
+        },
+        { imageFile, removeImage },
+        setUploadProgress,
+      );
+    } catch (saveError) {
+      setError(saveError.message || "Unable to save this product.");
+    } finally {
+      setIsSaving(false);
+    }
   }
+
+  const displayedImage = removeImage ? "" : form.Image;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-5">
-
-      <div className="bg-white rounded-3xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
-
-        <div className="p-8">
-
-          <h2 className="text-3xl font-bold">
-
-            {form.id ? "Edit Product" : "Add Product"}
-
-          </h2>
-
-          <p className="text-gray-500 mt-2">
-
-            Update your menu item.
-
-          </p>
-
-          <div className="mt-8">
-
-            <div className="w-40 h-40 rounded-3xl bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300 mx-auto">
-
-              <div className="text-center">
-
-                <div className="text-5xl">
-
-                  📷
-
-                </div>
-
-                <div className="mt-2 text-sm text-gray-500">
-
-                  Upload Image
-
-                </div>
-
-              </div>
-
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
+      <form
+        onSubmit={handleSubmit}
+        className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
+      >
+        <div className="p-6 sm:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold">
+                {form.id ? "Edit Product" : "Add Product"}
+              </h2>
+              <p className="mt-2 text-gray-500">Manage how this item appears on the customer menu.</p>
             </div>
-
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSaving}
+              aria-label="Close editor"
+              className="rounded-full bg-gray-100 px-3 py-1.5 text-xl disabled:opacity-50"
+            >
+              ×
+            </button>
           </div>
 
-          <div className="space-y-5 mt-8">            <input
-              className="w-full border rounded-xl p-4"
-              placeholder="Product Name"
-              value={form.Name || ""}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  Name: e.target.value,
-                })
-              }
+          <div className="mt-8">
+            <ProductImageUploader
+              imageUrl={displayedImage}
+              selectedFile={imageFile}
+              disabled={isSaving}
+              onFileChange={(file) => {
+                setImageFile(file);
+                setRemoveImage(false);
+              }}
+              onRemove={() => {
+                setImageFile(null);
+                setRemoveImage(true);
+              }}
             />
+          </div>
+
+          <div className="mt-8 space-y-5">
+            <div>
+              <label className="mb-2 block text-sm font-semibold">Product name</label>
+              <input
+                className="w-full rounded-xl border border-gray-300 p-4 focus:border-green-700 focus:outline-none"
+                placeholder="Example: Cappuccino"
+                value={form.Name || ""}
+                disabled={isSaving}
+                onChange={(event) => updateField("Name", event.target.value)}
+              />
+            </div>
 
             <div>
-
-              <label className="block text-sm font-semibold mb-2">
-                Category
-              </label>
-
+              <label className="mb-2 block text-sm font-semibold">Category</label>
               <select
-                value={newCategory ? "__new__" : (form.Category || "")}
-                onChange={(e) =>
-                  handleCategoryChange(e.target.value)
-                }
-                className="w-full border rounded-xl p-4"
+                value={newCategory !== "" ? "__new__" : form.Category || ""}
+                disabled={isSaving}
+                onChange={(event) => handleCategoryChange(event.target.value)}
+                className="w-full rounded-xl border border-gray-300 p-4 focus:border-green-700 focus:outline-none"
               >
-                <option value="">Select Category</option>
-
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
+                <option value="">Select category</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
                 ))}
-
-                <option value="__new__">
-                  + Create New Category
-                </option>
-
+                <option value="__new__">+ Create new category</option>
               </select>
-
             </div>
 
             {(newCategory !== "" || form.Category === "") && (
-
               <input
-                className="w-full border rounded-xl p-4"
-                placeholder="New Category Name"
+                className="w-full rounded-xl border border-gray-300 p-4 focus:border-green-700 focus:outline-none"
+                placeholder="New category name"
                 value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
+                disabled={isSaving}
+                onChange={(event) => setNewCategory(event.target.value)}
               />
-
             )}
 
-            <input
-              type="number"
-              className="w-full border rounded-xl p-4"
-              placeholder="Price"
-              value={form.Price || ""}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  Price: Number(e.target.value),
-                })
-              }
-            />
+            <div>
+              <label className="mb-2 block text-sm font-semibold">Price (₹)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className="w-full rounded-xl border border-gray-300 p-4 focus:border-green-700 focus:outline-none"
+                placeholder="0"
+                value={form.Price ?? ""}
+                disabled={isSaving}
+                onChange={(event) => updateField("Price", event.target.value)}
+              />
+            </div>
 
-            <textarea
-              rows={4}
-              className="w-full border rounded-xl p-4"
-              placeholder="Description"
-              value={form.Description || ""}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  Description: e.target.value,
-                })
-              }
-            />
+            <div>
+              <label className="mb-2 block text-sm font-semibold">Description</label>
+              <textarea
+                rows={4}
+                className="w-full rounded-xl border border-gray-300 p-4 focus:border-green-700 focus:outline-none"
+                placeholder="Describe the product"
+                value={form.Description || ""}
+                disabled={isSaving}
+                onChange={(event) => updateField("Description", event.target.value)}
+              />
+            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-
-              <label className="flex items-center gap-3">
-
-                <input
-                  type="checkbox"
-                  checked={form.Available ?? true}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      Available: e.target.checked,
-                    })
-                  }
-                />
-
-                Available
-
-              </label>
-
-              <label className="flex items-center gap-3">
-
-                <input
-                  type="checkbox"
-                  checked={form.BestSeller ?? false}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      BestSeller: e.target.checked,
-                    })
-                  }
-                />
-
-                ⭐ Best Seller
-
-              </label>
-
-              <label className="flex items-center gap-3">
-
-                <input
-                  type="checkbox"
-                  checked={form.TodaysSpecial ?? false}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      TodaysSpecial: e.target.checked,
-                    })
-                  }
-                />
-
-                🔥 Today's Special
-
-              </label>
-
+            <div className="grid gap-3 rounded-2xl bg-gray-50 p-5 sm:grid-cols-3">
+              {[
+                ["Available", "Available"],
+                ["BestSeller", "⭐ Best seller"],
+                ["TodaysSpecial", "🔥 Today's special"],
+              ].map(([field, label]) => (
+                <label key={field} className="flex items-center gap-3 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(form[field])}
+                    disabled={isSaving || (field === "Available" && form.Archived)}
+                    onChange={(event) => updateField(field, event.target.checked)}
+                    className="h-5 w-5 accent-green-700"
+                  />
+                  {label}
+                </label>
+              ))}
             </div>
 
             {form.id && (
-
               <button
-                onClick={() =>
-                  setForm({
-                    ...form,
-                    Archived: true,
-                  })
-                }
-                className="w-full rounded-xl border border-red-300 text-red-600 py-3 font-semibold"
+                type="button"
+                disabled={isSaving}
+                onClick={() => updateField("Archived", !form.Archived)}
+                className={`w-full rounded-xl border py-3 font-semibold ${
+                  form.Archived
+                    ? "border-green-300 text-green-700"
+                    : "border-red-300 text-red-600"
+                }`}
               >
-                Archive Product
+                {form.Archived ? "Restore Product" : "Archive Product"}
               </button>
-
             )}
-
           </div>
 
-          <div className="flex gap-4 mt-10">
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="mt-5">
+              <div className="mb-2 flex justify-between text-sm font-semibold text-gray-600">
+                <span>Uploading image</span><span>{uploadProgress}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+                <div className="h-full bg-green-700 transition-all" style={{ width: `${uploadProgress}%` }} />
+              </div>
+            </div>
+          )}
 
+          {error && (
+            <p className="mt-5 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>
+          )}
+
+          <div className="mt-8 flex gap-4">
             <button
+              type="button"
               onClick={onClose}
-              className="flex-1 rounded-xl border py-4 font-semibold"
+              disabled={isSaving}
+              className="flex-1 rounded-xl border border-gray-300 py-4 font-semibold disabled:opacity-50"
             >
               Cancel
             </button>
-
             <button
-              onClick={handleSave}
-              className="flex-1 rounded-xl bg-green-700 text-white py-4 font-bold"
+              type="submit"
+              disabled={isSaving}
+              className="flex-1 rounded-xl bg-green-700 py-4 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Save
+              {isSaving ? "Saving…" : "Save Product"}
             </button>
-
           </div>
-
         </div>
-
-      </div>
-
+      </form>
     </div>
   );
 }
