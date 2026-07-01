@@ -21,6 +21,16 @@ export function CartProvider({ children }) {
     });
   }
 
+  function increaseQty(id) {
+    setCart((prev) =>
+      prev.map((i) =>
+        i.id === id
+          ? { ...i, qty: i.qty + 1 }
+          : i
+      )
+    );
+  }
+
   function decreaseQty(id) {
     setCart((prev) =>
       prev
@@ -33,14 +43,9 @@ export function CartProvider({ children }) {
     );
   }
 
-  function increaseQty(id) {
-    setCart((prev) =>
-      prev.map((i) =>
-        i.id === id
-          ? { ...i, qty: i.qty + 1 }
-          : i
-      )
-    );
+  // ⭐ NEW
+  function clearCart() {
+    setCart([]);
   }
 
   const total = cart.reduce(
@@ -60,6 +65,7 @@ export function CartProvider({ children }) {
         addToCart,
         increaseQty,
         decreaseQty,
+        clearCart,
         total,
         totalItems,
       }}

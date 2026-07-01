@@ -26,7 +26,9 @@ export default function Cart() {
         total
       );
 
-      navigate("/success");
+      navigate(
+  `/success?table=${table}&mobile=${mobile}`
+);
     } catch (err) {
       console.error(err);
       alert(err.message);
