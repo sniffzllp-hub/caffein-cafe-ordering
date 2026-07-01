@@ -1,7 +1,7 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../services/firebase";
+import { db } from "../../services/firebase";
 
 export default function Home() {
   const [searchParams] = useSearchParams();

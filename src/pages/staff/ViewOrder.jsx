@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import Header from "../components/Header";
-import { getCurrentOrder } from "../services/dashboardService";
-import { closeTable } from "../services/orderService";
+import Header from "../../components/customer/Header";
+import { getCurrentOrder } from "../../services/dashboardService";
+import { closeTable } from "../../services/orderService";
 
 export default function ViewOrder() {
   const navigate = useNavigate();

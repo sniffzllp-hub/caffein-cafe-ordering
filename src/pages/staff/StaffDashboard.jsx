@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 
-import { db } from "../services/firebase";
-import TableCard from "../components/TableCard";
+import { db } from "../../services/firebase";
+import TableCard from "../../components/staff/TableCard";
 
-export default function Dashboard() {
+export default function StaffDashboard() {
   const [tables, setTables] = useState([]);
 
   useEffect(() => {
@@ -25,24 +25,40 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, []);
 
+  const openTables = tables.filter(
+    (t) => t.status === "OPEN"
+  );
+
   return (
     <div className="min-h-screen bg-gray-100">
 
-      <div className="sticky top-0 bg-white shadow p-5 z-50">
+      <div className="sticky top-0 bg-white shadow p-6 z-50">
 
         <h1 className="text-3xl font-bold">
-          ☕ Caffein Dashboard
+          ☕ Live Orders
         </h1>
 
-        <p className="text-gray-500 mt-1">
-          Live Tables
+        <p className="text-gray-500 mt-2">
+          Cashier Dashboard
         </p>
+
+        <div className="mt-6 bg-green-50 rounded-2xl p-5">
+
+          <div className="text-gray-500 text-sm">
+            Open Tables
+          </div>
+
+          <div className="text-4xl font-bold text-green-700 mt-2">
+            {openTables.length}
+          </div>
+
+        </div>
 
       </div>
 
       <div className="max-w-6xl mx-auto p-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 
-        {tables.map((table) => (
+        {openTables.map((table) => (
           <TableCard
             key={table.id}
             table={table}

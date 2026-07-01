@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Header from "../components/Header";
-import { useCart } from "../context/CartContext";
-import { placeOrder } from "../services/orderService";
+
+import Header from "../../components/customer/Header";
+import { useCart } from "../../context/CartContext";
+import { placeOrder } from "../../services/orderService";
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -10,14 +12,21 @@ export default function Cart() {
   const table = searchParams.get("table");
   const mobile = searchParams.get("mobile");
 
+  const [placingOrder, setPlacingOrder] = useState(false);
+
   const {
     cart,
     total,
     increaseQty,
     decreaseQty,
+    clearCart,
   } = useCart();
 
   async function handlePlaceOrder() {
+    if (placingOrder) return;
+
+    setPlacingOrder(true);
+
     try {
       await placeOrder(
         table,
@@ -26,17 +35,23 @@ export default function Cart() {
         total
       );
 
+      clearCart();
+
       navigate(
-  `/success?table=${table}&mobile=${mobile}`
-);
+        `/success?table=${table}&mobile=${mobile}`
+      );
+
     } catch (err) {
       console.error(err);
       alert(err.message);
+
+      setPlacingOrder(false);
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center">
+
       <div className="w-full max-w-[430px] min-h-screen bg-white shadow-xl flex flex-col">
 
         <Header
@@ -119,9 +134,16 @@ export default function Cart() {
 
           <button
             onClick={handlePlaceOrder}
-            className="w-full bg-green-700 text-white rounded-xl py-4 font-bold"
+            disabled={placingOrder}
+            className={`w-full rounded-xl py-4 font-bold text-white ${
+              placingOrder
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-700"
+            }`}
           >
-            Place Order
+            {placingOrder
+              ? "Placing Order..."
+              : "Place Order"}
           </button>
 
         </div>

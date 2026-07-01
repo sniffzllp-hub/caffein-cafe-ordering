@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useCart } from "../context/CartContext";
 
 export default function OrderSuccess() {
   const navigate = useNavigate();
@@ -9,13 +8,9 @@ export default function OrderSuccess() {
   const table = searchParams.get("table");
   const mobile = searchParams.get("mobile");
 
-  const { clearCart } = useCart();
-
   const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
-    clearCart();
-
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev === 1) {
@@ -33,8 +28,7 @@ export default function OrderSuccess() {
     }, 1000);
 
     return () => clearInterval(timer);
-
-  }, []);
+  }, [navigate, table, mobile]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center">
@@ -58,9 +52,7 @@ export default function OrderSuccess() {
         </p>
 
         <div className="mt-8 text-lg font-semibold">
-
           Redirecting in {countdown}...
-
         </div>
 
         <button
