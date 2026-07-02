@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-const ACCESS_PIN = "1234";
+const ACCESS_PIN = "1228";
 
 function sessionKeyForArea(area) {
   return `caffein_${area}_access`;
@@ -65,7 +65,7 @@ export default function StaffAuthGate({ children, area = "staff" }) {
             setPin(event.target.value.replace(/\D/g, "").slice(0, 4));
             setError("");
           }}
-          placeholder="1234"
+          placeholder="1228"
           className="mt-3 w-full rounded-2xl border border-white/15 bg-black/25 px-5 py-4 text-center text-3xl font-black tracking-[0.45em] text-white outline-none transition focus:border-amber-300"
         />
 
