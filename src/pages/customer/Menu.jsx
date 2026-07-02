@@ -32,12 +32,7 @@ export default function Menu() {
 
         setMenuItems(items);
         setTable(resolvedTable);
-
-        const expanded = {};
-        items.forEach((item) => {
-          expanded[item.Category] = true;
-        });
-        setOpenCategories(expanded);
+        setOpenCategories({});
       } catch (err) {
         console.error(err);
         alert(err.message || "Could not open menu.");
@@ -80,6 +75,8 @@ export default function Menu() {
     [menuItems]
   );
 
+  const isSearching = search.trim().length > 0;
+
   function toggleCategory(category) {
     setOpenCategories((prev) => ({
       ...prev,
@@ -95,7 +92,7 @@ export default function Menu() {
     <div className="min-h-screen bg-[#eee4d6] flex justify-center text-stone-950">
       <div className="w-full max-w-[460px] min-h-screen bg-[#fbf7ef] shadow-2xl">
         <header className="sticky top-0 z-50 overflow-hidden bg-stone-950 text-white shadow-xl">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.32),transparent_35%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.32),transparent_35%)] pointer-events-none" />
           <div className="relative p-5 pb-6">
             <div className="flex items-center justify-between">
               <div>
@@ -118,7 +115,7 @@ export default function Menu() {
         </header>
 
         <main className="p-4 pb-32">
-          {featuredItems.length > 0 && !search && (
+          {featuredItems.length > 0 && !isSearching && (
             <section className="mb-6">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-xl font-black">Chef picks</h2>
@@ -138,24 +135,28 @@ export default function Menu() {
             </section>
           )}
 
-          {Object.entries(grouped).map(([category, items]) => (
-            <section key={category} className="mb-6">
-              <button
-                onClick={() => toggleCategory(category)}
-                className="mb-3 flex w-full items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5"
-              >
-                <div className="text-left">
-                  <h2 className="text-xl font-black">{category}</h2>
-                  <p className="text-xs font-semibold text-stone-500">{items.length} item{items.length > 1 ? "s" : ""}</p>
-                </div>
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-xl font-black text-amber-900">
-                  {openCategories[category] ? "−" : "+"}
-                </span>
-              </button>
+          {Object.entries(grouped).map(([category, items]) => {
+            const isOpen = isSearching || openCategories[category];
 
-              {openCategories[category] && items.map((item) => <MenuCard key={item.id} item={item} />)}
-            </section>
-          ))}
+            return (
+              <section key={category} className="mb-6">
+                <button
+                  onClick={() => toggleCategory(category)}
+                  className="mb-3 flex w-full items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5"
+                >
+                  <div className="text-left">
+                    <h2 className="text-xl font-black">{category}</h2>
+                    <p className="text-xs font-semibold text-stone-500">{items.length} item{items.length > 1 ? "s" : ""}</p>
+                  </div>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-lg font-black text-amber-900 transition-transform">
+                    {isOpen ? "⌃" : "⌄"}
+                  </span>
+                </button>
+
+                {isOpen && items.map((item) => <MenuCard key={item.id} item={item} />)}
+              </section>
+            );
+          })}
         </main>
 
         {totalItems > 0 && (
