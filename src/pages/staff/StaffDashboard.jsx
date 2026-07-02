@@ -1,72 +1,88 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 import { db } from "../../services/firebase";
 import TableCard from "../../components/staff/TableCard";
 
 export default function StaffDashboard() {
+  const navigate = useNavigate();
   const [tables, setTables] = useState([]);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "Tables"),
-      (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+    const unsubscribe = onSnapshot(collection(db, "Tables"), (snapshot) => {
+      const data = snapshot.docs.map((tableDoc) => ({
+        id: tableDoc.id,
+        ...tableDoc.data(),
+      }));
 
-        data.sort((a, b) => Number(a.id) - Number(b.id));
-
-        setTables(data);
-      }
-    );
+      data.sort((a, b) => Number(a.id) - Number(b.id));
+      setTables(data);
+    });
 
     return () => unsubscribe();
   }, []);
 
-  const openTables = tables.filter(
-    (t) => t.status === "OPEN"
-  );
+  const openTables = useMemo(() => tables.filter((table) => table.status === "OPEN"), [tables]);
+  const floorTotal = openTables.reduce((sum, table) => sum + Number(table.total || 0), 0);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-
-      <div className="sticky top-0 bg-white shadow p-6 z-50">
-
-        <h1 className="text-3xl font-bold">
-          ☕ Live Orders
-        </h1>
-
-        <p className="text-gray-500 mt-2">
-          Cashier Dashboard
-        </p>
-
-        <div className="mt-6 bg-green-50 rounded-2xl p-5">
-
-          <div className="text-gray-500 text-sm">
-            Open Tables
+    <div className="min-h-screen bg-[#f5f0e8] text-stone-950">
+      <header className="sticky top-0 z-50 border-b border-stone-200/70 bg-[#f5f0e8]/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-amber-700">Cashier Dashboard</p>
+            <h1 className="text-4xl font-black tracking-tight">Live Orders</h1>
           </div>
 
-          <div className="text-4xl font-bold text-green-700 mt-2">
-            {openTables.length}
+          <div className="flex gap-3">
+            <button onClick={() => navigate("/admin")} className="rounded-2xl bg-white px-5 py-3 font-black shadow-sm ring-1 ring-black/5">
+              Admin
+            </button>
+            <button onClick={() => navigate("/analytics")} className="rounded-2xl bg-stone-950 px-5 py-3 font-black text-white shadow-lg shadow-stone-950/15">
+              Analytics
+            </button>
           </div>
-
         </div>
+      </header>
 
-      </div>
+      <main className="mx-auto max-w-7xl px-5 py-8">
+        <section className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-[1.75rem] bg-stone-950 p-6 text-white shadow-xl shadow-stone-950/10">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-amber-300">Open Tables</p>
+            <h2 className="mt-3 text-5xl font-black">{openTables.length}</h2>
+          </div>
+          <div className="rounded-[1.75rem] bg-white p-6 shadow-sm ring-1 ring-black/5">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-stone-400">Active Bill Value</p>
+            <h2 className="mt-3 text-5xl font-black">₹{floorTotal}</h2>
+          </div>
+          <div className="rounded-[1.75rem] bg-amber-100 p-6 text-amber-950 shadow-sm ring-1 ring-black/5">
+            <p className="text-sm font-black uppercase tracking-[0.2em] opacity-60">Total Tables</p>
+            <h2 className="mt-3 text-5xl font-black">{tables.length}</h2>
+          </div>
+        </section>
 
-      <div className="max-w-6xl mx-auto p-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <section className="mt-8">
+          <div className="mb-5 flex items-end justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.22em] text-stone-400">Floor</p>
+              <h2 className="text-2xl font-black">Tables needing attention</h2>
+            </div>
+          </div>
 
-        {openTables.map((table) => (
-          <TableCard
-            key={table.id}
-            table={table}
-          />
-        ))}
-
-      </div>
-
+          {openTables.length === 0 ? (
+            <div className="rounded-[2rem] bg-white p-10 text-center shadow-sm ring-1 ring-black/5">
+              <div className="text-6xl">☕</div>
+              <h3 className="mt-4 text-2xl font-black">No open tables right now</h3>
+              <p className="mt-2 text-stone-500">New customer orders will appear here live.</p>
+            </div>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {openTables.map((table) => <TableCard key={table.id} table={table} />)}
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }
