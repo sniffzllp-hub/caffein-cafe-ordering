@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
+import BrandLogo from "../../components/BrandLogo";
+
 const adminModules = [
   {
     title: "Menu Studio",
@@ -7,6 +9,13 @@ const adminModules = [
     icon: "🍽️",
     path: "/menu-studio",
     tone: "bg-amber-100 text-amber-950",
+  },
+  {
+    title: "Branding",
+    description: "Upload the company logo shown across customer, staff, and admin pages.",
+    icon: "🏷️",
+    path: "/branding",
+    tone: "bg-orange-100 text-orange-950",
   },
   {
     title: "Analytics",
@@ -43,7 +52,7 @@ export default function AdminDashboard() {
         <div className="relative mx-auto max-w-7xl px-5 py-10 md:py-14">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.3em] text-amber-300">Caffein Cafe OS</p>
+              <BrandLogo size="lg" showName nameClassName="text-sm font-black uppercase tracking-[0.3em] text-amber-300" />
               <h1 className="mt-4 max-w-3xl text-5xl font-black tracking-tight md:text-7xl">Admin command center</h1>
               <p className="mt-5 max-w-2xl text-sm leading-6 text-stone-300 md:text-base">
                 Manage the guest menu, table QR codes, live operations and business pulse from one clean workspace.
@@ -61,7 +70,7 @@ export default function AdminDashboard() {
       </section>
 
       <main className="mx-auto max-w-7xl px-5 py-8">
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
           {adminModules.map((module) => (
             <button
               key={module.title}
