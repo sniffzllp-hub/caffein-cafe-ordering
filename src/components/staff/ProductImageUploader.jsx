@@ -75,7 +75,7 @@ export default function ProductImageUploader({
         <div className="text-center sm:text-left">
           <p className="font-semibold text-gray-900">Product photograph</p>
           <p className="mt-1 text-sm text-gray-500">
-            JPG, PNG, or WebP. Maximum size 5 MB.
+            JPG, PNG, or WebP up to 15 MB. Large photos are optimized before upload.
           </p>
           <div className="mt-3 flex justify-center gap-3 sm:justify-start">
             <button
