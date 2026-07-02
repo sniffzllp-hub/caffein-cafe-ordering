@@ -7,6 +7,7 @@ import {
   getCustomerLink,
   getTables,
   refreshTableToken,
+  resetFloorTables,
 } from "../../services/tableService";
 
 function qrUrl(link) {
@@ -16,9 +17,10 @@ function qrUrl(link) {
 export default function TableSetup() {
   const navigate = useNavigate();
   const [tables, setTables] = useState([]);
-  const [count, setCount] = useState(12);
+  const [count, setCount] = useState(20);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [copied, setCopied] = useState("");
 
   async function loadTables() {
@@ -46,6 +48,24 @@ export default function TableSetup() {
       alert(err.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleResetFloor() {
+    if (!window.confirm("Reset the floor now? This will close every table, clear active mobile numbers, clear active totals, and recreate missing table links.")) {
+      return;
+    }
+
+    setResetting(true);
+    try {
+      await resetFloorTables(count || 20);
+      await loadTables();
+      alert("Floor reset complete. Tables are now closed and QR links are ready.");
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -99,7 +119,7 @@ export default function TableSetup() {
 
           <div className="rounded-3xl bg-white/10 p-4">
             <label className="text-xs font-black uppercase tracking-[0.2em] text-stone-300">Number of tables</label>
-            <div className="mt-3 flex gap-3">
+            <div className="mt-3 flex flex-wrap gap-3">
               <input
                 type="number"
                 min="1"
@@ -110,10 +130,17 @@ export default function TableSetup() {
               />
               <button
                 onClick={handleGenerate}
-                disabled={saving}
+                disabled={saving || resetting}
                 className="rounded-2xl bg-amber-400 px-5 py-3 font-black text-stone-950 transition hover:bg-amber-300 disabled:opacity-60"
               >
                 {saving ? "Generating..." : "Generate"}
+              </button>
+              <button
+                onClick={handleResetFloor}
+                disabled={saving || resetting}
+                className="rounded-2xl border border-red-300 px-5 py-3 font-black text-red-200 transition hover:bg-red-500/10 disabled:opacity-60"
+              >
+                {resetting ? "Resetting..." : "Reset Floor"}
               </button>
             </div>
           </div>
