@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
 
 import { db } from "../../services/firebase";
 import TableCard from "../../components/staff/TableCard";
 
 export default function StaffDashboard() {
-  const navigate = useNavigate();
   const [tables, setTables] = useState([]);
 
   useEffect(() => {
@@ -29,20 +27,14 @@ export default function StaffDashboard() {
   return (
     <div className="min-h-screen bg-[#f5f0e8] text-stone-950">
       <header className="sticky top-0 z-50 border-b border-stone-200/70 bg-[#f5f0e8]/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-5 md:flex-row md:items-center md:justify-between">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.25em] text-amber-700">Cashier Dashboard</p>
             <h1 className="text-4xl font-black tracking-tight">Live Orders</h1>
           </div>
-
-          <div className="flex gap-3">
-            <button onClick={() => navigate("/admin")} className="rounded-2xl bg-white px-5 py-3 font-black shadow-sm ring-1 ring-black/5">
-              Admin
-            </button>
-            <button onClick={() => navigate("/analytics")} className="rounded-2xl bg-stone-950 px-5 py-3 font-black text-white shadow-lg shadow-stone-950/15">
-              Analytics
-            </button>
-          </div>
+          <p className="max-w-md text-sm font-semibold leading-6 text-stone-500">
+            Staff can view live tables and manage active orders here. Admin tools are kept separate.
+          </p>
         </div>
       </header>
 
