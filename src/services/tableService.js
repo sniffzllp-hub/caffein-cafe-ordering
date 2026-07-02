@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   where,
@@ -129,9 +130,21 @@ export async function generateTables(count) {
 
     if (tableSnap.exists()) {
       const table = tableSnap.data();
-      if (!table.token) {
-        writes.push(updateDoc(tableRef, { token: makeTableToken(i) }));
-      }
+      writes.push(
+        setDoc(
+          tableRef,
+          {
+            tableNumber: Number(table.tableNumber || i),
+            status: table.status || "CLOSED",
+            mobile: table.mobile || "",
+            total: Number(table.total || 0),
+            currentOrderId: table.currentOrderId || "",
+            token: table.token || makeTableToken(i),
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true },
+        ),
+      );
     } else {
       writes.push(
         setDoc(tableRef, {
@@ -141,12 +154,42 @@ export async function generateTables(count) {
           total: 0,
           currentOrderId: "",
           token: makeTableToken(i),
+          updatedAt: serverTimestamp(),
         })
       );
     }
   }
 
   await Promise.all(writes);
+}
+
+export async function resetFloorTables(count = 20) {
+  const total = Number(count);
+
+  if (!Number.isInteger(total) || total < 1 || total > 250) {
+    throw new Error("Enter a table count between 1 and 250.");
+  }
+
+  await generateTables(total);
+
+  const tables = await getTables();
+  await Promise.all(
+    tables.map((table) =>
+      setDoc(
+        doc(db, TABLE_COLLECTION, String(table.id)),
+        {
+          tableNumber: Number(table.tableNumber || table.id),
+          status: "CLOSED",
+          mobile: "",
+          total: 0,
+          currentOrderId: "",
+          token: table.token || makeTableToken(table.id),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      ),
+    ),
+  );
 }
 
 export async function refreshTableToken(tableId) {
