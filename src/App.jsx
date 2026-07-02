@@ -13,6 +13,7 @@ import ViewOrder from "./pages/staff/ViewOrder";
 import CategoryItems from "./pages/staff/CategoryItems";
 import AnalyticsDashboard from "./pages/staff/AnalyticsDashboard";
 import TableSetup from "./pages/staff/TableSetup";
+import BrandingSettings from "./pages/staff/BrandingSettings";
 
 function ProtectedStaffRoute({ children, area = "staff" }) {
   return <StaffAuthGate area={area}>{children}</StaffAuthGate>;
@@ -77,6 +78,14 @@ export default function App() {
           element={
             <ProtectedStaffRoute area="admin">
               <TableSetup />
+            </ProtectedStaffRoute>
+          }
+        />
+        <Route
+          path="/branding"
+          element={
+            <ProtectedStaffRoute area="admin">
+              <BrandingSettings />
             </ProtectedStaffRoute>
           }
         />
