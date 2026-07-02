@@ -1,13 +1,17 @@
 import { useMemo, useState } from "react";
 
 const ACCESS_PIN = "1234";
-const SESSION_KEY = "caffein_staff_access";
+
+function sessionKeyForArea(area) {
+  return `caffein_${area}_access`;
+}
 
 export default function StaffAuthGate({ children, area = "staff" }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const sessionKey = sessionKeyForArea(area);
   const [unlocked, setUnlocked] = useState(
-    () => sessionStorage.getItem(SESSION_KEY) === ACCESS_PIN
+    () => sessionStorage.getItem(sessionKey) === ACCESS_PIN
   );
 
   const title = useMemo(
@@ -19,7 +23,7 @@ export default function StaffAuthGate({ children, area = "staff" }) {
     event.preventDefault();
 
     if (pin === ACCESS_PIN) {
-      sessionStorage.setItem(SESSION_KEY, ACCESS_PIN);
+      sessionStorage.setItem(sessionKey, ACCESS_PIN);
       setUnlocked(true);
       return;
     }
@@ -33,7 +37,7 @@ export default function StaffAuthGate({ children, area = "staff" }) {
 
   return (
     <div className="min-h-screen bg-[#120d09] text-white flex items-center justify-center p-5">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.22),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(120,53,15,0.32),transparent_38%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.22),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(120,53,15,0.32),transparent_38%)] pointer-events-none" />
 
       <form
         onSubmit={handleSubmit}
@@ -49,11 +53,11 @@ export default function StaffAuthGate({ children, area = "staff" }) {
           </p>
         </div>
 
-        <label className="text-sm font-semibold text-stone-200" htmlFor="staff-pin">
+        <label className="text-sm font-semibold text-stone-200" htmlFor={`${area}-pin`}>
           Access PIN
         </label>
         <input
-          id="staff-pin"
+          id={`${area}-pin`}
           type="password"
           inputMode="numeric"
           value={pin}
