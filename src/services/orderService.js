@@ -19,7 +19,6 @@ export async function placeOrder(table, mobile, cart, total) {
 
   const tableData = tableSnap.data();
 
-  // Existing Open Order
   if (tableData.currentOrderId) {
     const orderRef = doc(db, "Orders", tableData.currentOrderId);
     const orderSnap = await getDoc(orderRef);
@@ -29,11 +28,10 @@ export async function placeOrder(table, mobile, cart, total) {
     }
 
     const orderData = orderSnap.data();
-
-    const mergedItems = [...orderData.items];
+    const mergedItems = [...(orderData.items || [])];
 
     cart.forEach((newItem) => {
-      const existing = mergedItems.find((i) => i.id === newItem.id);
+      const existing = mergedItems.find((item) => item.id === newItem.id);
 
       if (existing) {
         existing.qty += newItem.qty;
@@ -48,30 +46,37 @@ export async function placeOrder(table, mobile, cart, total) {
     });
 
     const newTotal = mergedItems.reduce(
-      (sum, item) => sum + item.Price * item.qty,
+      (sum, item) => sum + Number(item.Price || 0) * Number(item.qty || 0),
       0
     );
 
     await updateDoc(orderRef, {
       items: mergedItems,
       total: newTotal,
+      updatedAt: serverTimestamp(),
     });
 
     await updateDoc(tableRef, {
       total: newTotal,
+      updatedAt: serverTimestamp(),
     });
 
     return;
   }
 
-  // First Order
   const orderRef = await addDoc(collection(db, "Orders"), {
-    table,
+    table: String(table),
     mobile,
-    items: cart,
+    items: cart.map((item) => ({
+      id: item.id,
+      Name: item.Name,
+      Price: item.Price,
+      qty: item.qty,
+    })),
     total,
     status: "OPEN",
     createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   });
 
   await updateDoc(tableRef, {
@@ -79,6 +84,7 @@ export async function placeOrder(table, mobile, cart, total) {
     mobile,
     total,
     status: "OPEN",
+    updatedAt: serverTimestamp(),
   });
 }
 
@@ -93,13 +99,11 @@ export async function closeTable(tableId) {
   const table = tableSnap.data();
 
   if (table.currentOrderId) {
-    await updateDoc(
-      doc(db, "Orders", table.currentOrderId),
-      {
-        status: "PAID",
-        closedAt: serverTimestamp(),
-      }
-    );
+    await updateDoc(doc(db, "Orders", table.currentOrderId), {
+      status: "PAID",
+      closedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
   }
 
   await updateDoc(tableRef, {
@@ -107,6 +111,7 @@ export async function closeTable(tableId) {
     mobile: "",
     total: 0,
     currentOrderId: "",
+    updatedAt: serverTimestamp(),
   });
 }
 
@@ -124,14 +129,13 @@ export async function reopenTable(tableId) {
     throw new Error("No order to reopen.");
   }
 
-  await updateDoc(
-    doc(db, "Orders", table.currentOrderId),
-    {
-      status: "OPEN",
-    }
-  );
+  await updateDoc(doc(db, "Orders", table.currentOrderId), {
+    status: "OPEN",
+    updatedAt: serverTimestamp(),
+  });
 
   await updateDoc(tableRef, {
     status: "OPEN",
+    updatedAt: serverTimestamp(),
   });
 }

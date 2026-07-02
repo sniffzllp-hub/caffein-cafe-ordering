@@ -5,21 +5,18 @@ export default function OrderSuccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const table = searchParams.get("table");
+  const tableKey = searchParams.get("tableKey");
   const mobile = searchParams.get("mobile");
-
   const [countdown, setCountdown] = useState(3);
+
+  const menuPath = `/menu?tableKey=${tableKey}&mobile=${mobile}`;
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev === 1) {
           clearInterval(timer);
-
-          navigate(
-            `/menu?table=${table}&mobile=${mobile}`
-          );
-
+          navigate(menuPath);
           return 0;
         }
 
@@ -28,46 +25,35 @@ export default function OrderSuccess() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate, table, mobile]);
+  }, [menuPath, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center items-center">
+    <div className="min-h-screen bg-[#120d09] text-white flex items-center justify-center p-5">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.24),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.28),transparent_40%)]" />
 
-      <div className="w-full max-w-[430px] bg-white rounded-3xl shadow-xl p-8 text-center">
-
-        <div className="text-7xl mb-4">
-          ✅
+      <div className="relative w-full max-w-md rounded-[2.25rem] border border-white/10 bg-white/10 p-8 text-center shadow-2xl backdrop-blur-xl">
+        <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-emerald-300 text-6xl shadow-lg shadow-emerald-950/30">
+          ✓
         </div>
 
-        <h1 className="text-3xl font-bold">
-          Order Received!
-        </h1>
-
-        <p className="text-gray-500 mt-4">
-          We've sent your order to the kitchen.
+        <p className="mt-8 text-sm font-black uppercase tracking-[0.28em] text-amber-200">Order received</p>
+        <h1 className="mt-3 text-4xl font-black tracking-tight">Sent to the team</h1>
+        <p className="mt-4 text-sm leading-6 text-stone-300">
+          We have your order. You can keep browsing and add more items until staff closes your table.
         </p>
 
-        <p className="text-gray-500">
-          You can continue browsing and add more items anytime before your table is closed.
-        </p>
-
-        <div className="mt-8 text-lg font-semibold">
-          Redirecting in {countdown}...
+        <div className="mt-8 rounded-3xl bg-black/20 p-5">
+          <p className="text-sm text-stone-300">Taking you back to the menu in</p>
+          <div className="mt-1 text-5xl font-black text-amber-200">{countdown}</div>
         </div>
 
         <button
-          onClick={() =>
-            navigate(
-              `/menu?table=${table}&mobile=${mobile}`
-            )
-          }
-          className="mt-8 w-full bg-green-700 text-white rounded-xl py-4 font-bold"
+          onClick={() => navigate(menuPath)}
+          className="mt-6 w-full rounded-2xl bg-amber-400 py-4 font-black text-stone-950 shadow-lg shadow-amber-950/30 transition hover:bg-amber-300"
         >
           Continue Browsing
         </button>
-
       </div>
-
     </div>
   );
 }
