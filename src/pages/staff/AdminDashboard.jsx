@@ -38,8 +38,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-[#f5f0e8] text-stone-950">
-      <section className="overflow-hidden bg-stone-950 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.25),transparent_34%)]" />
+      <section className="relative overflow-hidden bg-stone-950 text-white">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.25),transparent_34%)]" />
         <div className="relative mx-auto max-w-7xl px-5 py-10 md:py-14">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
